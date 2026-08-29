@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dealership
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dealership
+  template:
+    metadata:
+      labels:
+        app: dealership
+    spec:
+      containers:
+        - name: dealership
+          image: IMAGE_PLACEHOLDER
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DEBUG
+              value: "False"
+            - name: SECRET_KEY
+              value: "CHANGE_ME_IN_CLUSTER"
+            - name: ALLOWED_HOSTS
+              value: "*"
+            - name: backend_url
+              value: "BACKEND_URL_PLACEHOLDER"
+            - name: sentiment_analyzer_url
+              value: "SENTIMENT_URL_PLACEHOLDER"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dealership
+spec:
+  selector:
+    app: dealership
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000
+  type: ClusterIP
