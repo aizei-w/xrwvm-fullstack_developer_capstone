@@ -1,74 +1,40 @@
-import React, { useState } from 'react';
-
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import Header from "../Header/Header";
 import "./Login.css";
-import Header from '../Header/Header';
 
-const Login = ({ onClose }) => {
-
+const Login = () => {
+  const navigate = useNavigate();
   const [userName, setUserName] = useState("");
   const [password, setPassword] = useState("");
-  const [open,setOpen] = useState(true)
-
-  let login_url = window.location.origin+"/djangoapp/login";
+  const [error, setError] = useState("");
 
   const login = async (e) => {
     e.preventDefault();
-
-    const res = await fetch(login_url, {
+    setError("");
+    try {
+      const res = await fetch("/djangoapp/login", {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-            "userName": userName,
-            "password": password
-        }),
-    });
-    
-    const json = await res.json();
-    if (json.status != null && json.status === "Authenticated") {
-        sessionStorage.setItem('username', json.userName);
-        setOpen(false);        
-    }
-    else {
-      alert("The user could not be authenticated.")
-    }
-};
-
-  if (!open) {
-    window.location.href = "/";
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userName, password }),
+      });
+      const json = await res.json();
+      if (!res.ok || json.status !== "Authenticated") throw new Error("The user could not be authenticated.");
+      sessionStorage.setItem("username", json.userName);
+      sessionStorage.setItem("firstname", json.firstName || "");
+      sessionStorage.setItem("lastname", json.lastName || "");
+      navigate("/");
+    } catch (err) { setError(err.message); }
   };
-  
 
-  return (
-    <div>
-      <Header/>
-    <div onClick={onClose}>
-      <div
-        onClick={(e) => {
-          e.stopPropagation();
-        }}
-        className='modalContainer'
-      >
-          <form className="login_panel" style={{}} onSubmit={login}>
-              <div>
-              <span className="input_field">Username </span>
-              <input type="text"  name="username" placeholder="Username" className="input_field" onChange={(e) => setUserName(e.target.value)}/>
-              </div>
-              <div>
-              <span className="input_field">Password </span>
-              <input name="psw" type="password"  placeholder="Password" className="input_field" onChange={(e) => setPassword(e.target.value)}/>            
-              </div>
-              <div>
-              <input className="action_button" type="submit" value="Login"/>
-              <input className="action_button" type="button" value="Cancel" onClick={()=>setOpen(false)}/>
-              </div>
-              <a className="loginlink" href="/register">Register Now</a>
-          </form>
-      </div>
-    </div>
-    </div>
-  );
+  return <div><Header /><main className="login_panel"><form onSubmit={login}>
+    <h2>Login</h2>
+    {error && <p className="auth-error">{error}</p>}
+    <label>Username <input type="text" value={userName} onChange={(e) => setUserName(e.target.value)} required /></label>
+    <label>Password <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required /></label>
+    <button className="action_button" type="submit">Login</button>
+    <p><Link to="/register">Register Now</Link></p>
+  </form></main></div>;
 };
 
 export default Login;
